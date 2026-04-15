@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>시간 더하기 계산기</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f4f3ef;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: #888780;
+      text-align: center;
+      margin-bottom: 2rem;
+      letter-spacing: 0.04em;
+    }
+
+    /* 현재 시각 */
+    .now-block {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .now-label {
+      font-size: 13px;
+      color: #888780;
+      margin-bottom: 6px;
+    }
+    #now {
+      font-size: 46px;
+      font-weight: 500;
+      letter-spacing: 3px;
+      color: #2c2c2a;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* 입력 영역 */
+    .input-block {
+      background: #f4f3ef;
+      border-radius: 14px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .input-block-label {
+      font-size: 13px;
+      color: #888780;
+      margin-bottom: 12px;
+    }
+    .input-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+    }
+    .input-group {
+      flex: 1;
+    }
+    .input-group label {
+      display: block;
+      font-size: 12px;
+      color: #b4b2a9;
+      margin-bottom: 4px;
+    }
+    .input-group input {
+      width: 100%;
+      font-size: 24px;
+      font-weight: 500;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      border: 0.5px solid #d3d1c7;
+      border-radius: 10px;
+      padding: 10px 6px;
+      background: #ffffff;
+      color: #2c2c2a;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .input-group input:focus {
+      border-color: #7f77dd;
+      box-shadow: 0 0 0 3px rgba(127,119,221,0.15);
+    }
+    .colon {
+      font-size: 26px;
+      font-weight: 500;
+      color: #b4b2a9;
+      padding-bottom: 10px;
+    }
+
+    /* 결과 */
+    .result-block {
+      border: 0.5px solid #d3d1c7;
+      border-radius: 14px;
+      padding: 1.5rem 1.25rem;
+      text-align: center;
+    }
+    .result-label {
+      font-size: 13px;
+      color: #888780;
+      margin-bottom: 8px;
+    }
+    #result {
+      font-size: 52px;
+      font-weight: 500;
+      letter-spacing: 4px;
+      color: #534ab7;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+    #diff-label {
+      font-size: 13px;
+      color: #b4b2a9;
+      margin-top: 8px;
+      min-height: 18px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <p class="card-title">시간 더하기 계산기</p>
+
+  <div class="now-block">
+    <div class="now-label">현재 시각</div>
+    <div id="now">--:--:--</div>
+  </div>
+
+  <div class="input-block">
+    <div class="input-block-label">더할 시간 입력</div>
+    <div class="input-row">
+      <div class="input-group">
+        <label for="addH">시간</label>
+        <input type="number" id="addH" min="0" max="999" value="0" placeholder="0" />
+      </div>
+      <div class="colon">:</div>
+      <div class="input-group">
+        <label for="addM">분</label>
+        <input type="number" id="addM" min="0" max="59" value="0" placeholder="0" />
+      </div>
+    </div>
+  </div>
+
+  <div class="result-block">
+    <div class="result-label">결과 시각</div>
+    <div id="result">--:--</div>
+    <div id="diff-label"></div>
+  </div>
+</div>
+
+<script>
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function calc() {
+    const now = new Date();
+    const h = parseInt(document.getElementById('addH').value) || 0;
+    const m = parseInt(document.getElementById('addM').value) || 0;
+
+    document.getElementById('now').textContent =
+      pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+
+    const future = new Date(now.getTime() + (h * 60 + m) * 60000);
+    document.getElementById('result').textContent =
+      pad(future.getHours()) + ':' + pad(future.getMinutes());
+
+    const totalMins = h * 60 + m;
+    if (totalMins === 0) {
+      document.getElementById('diff-label').textContent = '지금과 같은 시각';
+    } else {
+      const days = Math.floor(totalMins / 1440);
+      const remH = Math.floor((totalMins % 1440) / 60);
+      const remM = totalMins % 60;
+      const parts = [];
+      if (days > 0) parts.push(days + '일');
+      if (remH > 0) parts.push(remH + '시간');
+      if (remM > 0) parts.push(remM + '분');
+      document.getElementById('diff-label').textContent = parts.join(' ') + ' 후';
+    }
+  }
+
+  document.getElementById('addH').addEventListener('input', calc);
+  document.getElementById('addM').addEventListener('input', calc);
+
+  calc();
+  setInterval(calc, 1000);
+</script>
+
+</body>
+</html>
