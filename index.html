@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>시간 더하기 계산기</title>
+  <title>최앙비를 위한 알바시간 계산기</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -51,6 +51,37 @@
       letter-spacing: 3px;
       color: #2c2c2a;
       font-variant-numeric: tabular-nums;
+    }
+
+    /* 홈 이름 입력 */
+    .name-block {
+      margin-bottom: 1.5rem;
+    }
+    .name-block label {
+      display: block;
+      font-size: 13px;
+      color: #888780;
+      margin-bottom: 6px;
+    }
+    #homeName {
+      width: 100%;
+      font-size: 15px;
+      font-weight: 500;
+      border: 0.5px solid #d3d1c7;
+      border-radius: 10px;
+      padding: 10px 14px;
+      background: #ffffff;
+      color: #2c2c2a;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    #homeName::placeholder {
+      color: #c8c6bd;
+      font-weight: 400;
+    }
+    #homeName:focus {
+      border-color: #7f77dd;
+      box-shadow: 0 0 0 3px rgba(127,119,221,0.15);
     }
 
     /* 입력 영역 */
@@ -110,11 +141,33 @@
       border-radius: 14px;
       padding: 1.5rem 1.25rem;
       text-align: center;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      user-select: none;
+    }
+    .result-block:hover {
+      background: #f9f8f5;
+      border-color: #7f77dd;
+    }
+    .result-block:active {
+      background: #f0effe;
     }
     .result-label {
       font-size: 13px;
       color: #888780;
       margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+    .result-label::after {
+      content: '복사';
+      font-size: 11px;
+      color: #b4b2a9;
+      background: #f4f3ef;
+      border-radius: 4px;
+      padding: 1px 6px;
     }
     #result {
       font-size: 52px;
@@ -124,22 +177,54 @@
       font-variant-numeric: tabular-nums;
       line-height: 1;
     }
+    #result-name {
+      font-size: 13px;
+      color: #888780;
+      margin-top: 6px;
+      min-height: 18px;
+    }
     #diff-label {
       font-size: 13px;
       color: #b4b2a9;
-      margin-top: 8px;
+      margin-top: 4px;
       min-height: 18px;
+    }
+
+    /* 복사 토스트 */
+    #toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      background: #2c2c2a;
+      color: #fff;
+      font-size: 13px;
+      padding: 8px 18px;
+      border-radius: 999px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+      white-space: nowrap;
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
     }
   </style>
 </head>
 <body>
 
 <div class="card">
-  <p class="card-title">시간 더하기 계산기</p>
+  <p class="card-title">알바시간 계산기</p>
 
   <div class="now-block">
     <div class="now-label">현재 시각</div>
     <div id="now">--:--:--</div>
+  </div>
+
+  <div class="name-block">
+    <label for="homeName">홈 이름</label>
+    <input type="text" id="homeName" placeholder="예) 집, 학교, 회사…" maxlength="30" />
   </div>
 
   <div class="input-block">
@@ -157,12 +242,15 @@
     </div>
   </div>
 
-  <div class="result-block">
+  <div class="result-block" id="result-block" title="클릭하여 복사">
     <div class="result-label">결과 시각</div>
     <div id="result">--:--</div>
+    <div id="result-name"></div>
     <div id="diff-label"></div>
   </div>
 </div>
+
+<div id="toast">클립보드에 복사됐어요 ✓</div>
 
 <script>
   function pad(n) { return String(n).padStart(2, '0'); }
@@ -171,6 +259,7 @@
     const now = new Date();
     const h = parseInt(document.getElementById('addH').value) || 0;
     const m = parseInt(document.getElementById('addM').value) || 0;
+    const name = document.getElementById('homeName').value.trim();
 
     document.getElementById('now').textContent =
       pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
@@ -178,6 +267,8 @@
     const future = new Date(now.getTime() + (h * 60 + m) * 60000);
     document.getElementById('result').textContent =
       pad(future.getHours()) + ':' + pad(future.getMinutes());
+
+    document.getElementById('result-name').textContent = name ? name + ' 도착' : '';
 
     const totalMins = h * 60 + m;
     if (totalMins === 0) {
@@ -194,8 +285,26 @@
     }
   }
 
+  let toastTimer = null;
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
+  }
+
+  document.getElementById('result-block').addEventListener('click', () => {
+    const time = document.getElementById('result').textContent;
+    const name = document.getElementById('homeName').value.trim();
+    if (time === '--:--') return;
+    const text = name ? name + ' (' + time + ')' : '(' + time + ')';
+    navigator.clipboard.writeText(text).then(() => showToast('클립보드에 복사됐어요 ✓'));
+  });
+
   document.getElementById('addH').addEventListener('input', calc);
   document.getElementById('addM').addEventListener('input', calc);
+  document.getElementById('homeName').addEventListener('input', calc);
 
   calc();
   setInterval(calc, 1000);
